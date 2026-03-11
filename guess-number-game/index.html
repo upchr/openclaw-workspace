@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜数字游戏 🦞</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .emoji {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            width: 150px;
+            padding: 15px;
+            font-size: 1.5em;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #764ba2;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .difficulty {
+            margin-bottom: 20px;
+        }
+
+        .difficulty button {
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+
+        .difficulty button.active {
+            background: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="emoji">🦞</div>
+        <h1>猜数字游戏</h1>
+        <p class="description">我想好了一个数字，你能猜出来吗？</p>
+
+        <div class="difficulty">
+            <button onclick="setDifficulty('easy')" id="btn-easy">简单 (1-50)</button>
+            <button onclick="setDifficulty('medium')" id="btn-medium" class="active">中等 (1-100)</button>
+            <button onclick="setDifficulty('hard')" id="btn-hard">困难 (1-200)</button>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="guessInput" placeholder="?" min="1" max="100" />
+        </div>
+
+        <div>
+            <button onclick="makeGuess()">猜！</button>
+            <button onclick="resetGame()" id="resetBtn" style="display: none;">再来一局</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">猜测次数</div>
+                <div class="stat-value" id="guessCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">最佳记录</div>
+                <div class="stat-value" id="bestScore">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">游戏次数</div>
+                <div class="stat-value" id="gameCount">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetNumber;
+        let guessCount = 0;
+        let gameCount = 0;
+        let bestScore = null;
+        let currentDifficulty = 'medium';
+        let maxRange = 100;
+
+        const difficulties = {
+            'easy': 50,
+            'medium': 100,
+            'hard': 200
+        };
+
+        function init() {
+            loadStats();
+            resetGame();
+        }
+
+        function setDifficulty(diff) {
+            currentDifficulty = diff;
+            maxRange = difficulties[diff];
+            
+            document.querySelectorAll('.difficulty button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-${diff}`).classList.add('active');
+            
+            document.getElementById('guessInput').max = maxRange;
+            resetGame();
+        }
+
+        function resetGame() {
+            targetNumber = Math.floor(Math.random() * maxRange) + 1;
+            guessCount = 0;
+            gameCount++;
+            
+            document.getElementById('guessInput').value = '';
+            document.getElementById('guessInput').disabled = false;
+            document.getElementById('guessInput').focus();
+            document.getElementById('guessCount').textContent = '0';
+            document.getElementById('gameCount').textContent = gameCount;
+            document.getElementById('message').className = 'message';
+            document.getElementById('resetBtn').style.display = 'none';
+            
+            console.log(`🦞 新游戏开始！范围：1-${maxRange}`);
+        }
+
+        function makeGuess() {
+            const input = document.getElementById('guessInput');
+            const guess = parseInt(input.value);
+            const messageEl = document.getElementById('message');
+
+            if (isNaN(guess) || guess < 1 || guess > maxRange) {
+                showMessage(`请输入 1 到 ${maxRange} 之间的数字！`, 'warning');
+                input.classList.add('shake');
+                setTimeout(() => input.classList.remove('shake'), 500);
+                return;
+            }
+
+            guessCount++;
+            document.getElementById('guessCount').textContent = guessCount;
+
+            if (guess === targetNumber) {
+                showMessage(`🎉 恭喜你猜对了！答案就是 ${targetNumber}！\n你用了 ${guessCount} 次猜中！`, 'success');
+                updateBestScore();
+                input.disabled = true;
+                document.getElementById('resetBtn').style.display = 'inline-block';
+                document.getElementById('resetBtn').focus();
+                saveStats();
+            } else if (guess < targetNumber) {
+                showMessage(`📈 太小了！再试试大一点的数字～`, 'info');
+                input.value = '';
+                input.focus();
+            } else {
+                showMessage(`📉 太大了！再试试小一点的数字～`, 'info');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message show ${type}`;
+        }
+
+        function updateBestScore() {
+            if (bestScore === null || guessCount < bestScore) {
+                bestScore = guessCount;
+                document.getElementById('bestScore').textContent = bestScore;
+            }
+        }
+
+        function saveStats() {
+            const stats = {
+                bestScore: bestScore,
+                gameCount: gameCount
+            };
+            localStorage.setItem('guessNumberStats', JSON.stringify(stats));
+        }
+
+        function loadStats() {
+            const stats = JSON.parse(localStorage.getItem('guessNumberStats') || '{}');
+            bestScore = stats.bestScore || null;
+            gameCount = stats.gameCount || 0;
+            
+            if (bestScore) {
+                document.getElementById('bestScore').textContent = bestScore;
+            }
+            document.getElementById('gameCount').textContent = gameCount;
+        }
+
+        // 支持回车键提交
+        document.getElementById('guessInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (this.disabled) {
+                    resetGame();
+                } else {
+                    makeGuess();
+                }
+            }
+        });
+
+        // 初始化游戏
+        init();
+    </script>
+</body>
+</html>
